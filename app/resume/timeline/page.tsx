@@ -1,6 +1,12 @@
 // app/resume/timeline/page.tsx
 import Link from "next/link";
 
+type TimelineLink = {
+  label: string;
+  href: string;
+  note?: string;
+};
+
 type TimelineItem = {
   period: string;
   org: string;
@@ -9,6 +15,7 @@ type TimelineItem = {
   summary: string;
   execution: string[];
   result: string[];
+  links?: TimelineLink[];
 };
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
@@ -67,6 +74,35 @@ const TimelineBlock = ({ item }: { item: TimelineItem }) => (
           ))}
         </ul>
       </div>
+
+      {/* ✅ Links (optional) */}
+      {item.links?.length ? (
+        <div>
+          <SectionLabel>Links</SectionLabel>
+          <div className="mt-3 flex flex-col gap-2">
+            {item.links.map((l) => {
+              const isExternal = l.href.startsWith("http");
+              return (
+                <div key={l.label + l.href} className="flex flex-col gap-0.5">
+                  <a
+                    href={l.href}
+                    target={isExternal ? "_blank" : undefined}
+                    rel={isExternal ? "noreferrer" : undefined}
+                    className="text-[14px] leading-7 text-black/65 hover:text-black transition word-keep-all"
+                  >
+                    {l.label} →
+                  </a>
+                  {l.note ? (
+                    <p className="text-[12.5px] leading-6 text-black/45 word-keep-all">
+                      {l.note}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   </section>
 );
@@ -136,6 +172,24 @@ export default function ResumeTimelinePage() {
         "감각/경험을 구조로 번역하는 해석 프레임 정립",
         "이후 의사결정 구조 및 시스템 설계로 사고 확장의 토대 확보",
       ],
+      links: [
+        {
+          label: "Thesis Page (Education & Research)",
+          href: "https://maroon-whimsey-29c.notion.site/Education-Research-2f498311970081de9a9de0058755a0a1?source=copy_link",
+          note:
+            "현재는 요약/원문이 같은 페이지에 구성되어 있습니다. 요약본 1페이지를 별도 분리하면 읽기 동선이 더 좋아집니다.",
+        },
+        // {
+        //   label: "Thesis Summary",
+        //   href: "요약본 페이지 링크를 여기에 추가",
+        //   note: "읽기 2분 내 요약본",
+        // },
+        // {
+        //   label: "Thesis (Full Text)",
+        //   href: "전문 PDF/Drive 링크를 여기에 추가",
+        //   note: "검증용 원문 자료",
+        // },
+      ],
     },
   ];
 
@@ -150,8 +204,7 @@ export default function ResumeTimelinePage() {
           Timeline / Reference Resume
         </h1>
         <p className="mt-4 max-w-[720px] text-[14.5px] leading-7 text-black/65 word-keep-all">
-          이 페이지는 실제 수행 이력을 연도 기준으로
-          정리한 참고 자료입니다.
+          이 페이지는 실제 수행 이력을 연도 기준으로 정리한 참고 자료입니다.
         </p>
 
         {/* ✅ 상단 네비 버튼: Overview + Home */}
