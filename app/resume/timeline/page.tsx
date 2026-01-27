@@ -24,6 +24,20 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
+const ExternalLink = ({ label, href }: { label: string; href: string }) => {
+  const isExternal = href.startsWith("http");
+  return (
+    <a
+      href={href}
+      target={isExternal ? "_blank" : undefined}
+      rel={isExternal ? "noreferrer" : undefined}
+      className="text-[14px] leading-7 text-black/65 hover:text-black transition word-keep-all"
+    >
+      {label} →
+    </a>
+  );
+};
+
 const TimelineBlock = ({ item }: { item: TimelineItem }) => (
   <section className="py-14">
     <div className="flex flex-col gap-2">
@@ -80,26 +94,16 @@ const TimelineBlock = ({ item }: { item: TimelineItem }) => (
         <div>
           <SectionLabel>Links</SectionLabel>
           <div className="mt-3 flex flex-col gap-2">
-            {item.links.map((l) => {
-              const isExternal = l.href.startsWith("http");
-              return (
-                <div key={l.label + l.href} className="flex flex-col gap-0.5">
-                  <a
-                    href={l.href}
-                    target={isExternal ? "_blank" : undefined}
-                    rel={isExternal ? "noreferrer" : undefined}
-                    className="text-[14px] leading-7 text-black/65 hover:text-black transition word-keep-all"
-                  >
-                    {l.label} →
-                  </a>
-                  {l.note ? (
-                    <p className="text-[12.5px] leading-6 text-black/45 word-keep-all">
-                      {l.note}
-                    </p>
-                  ) : null}
-                </div>
-              );
-            })}
+            {item.links.map((l) => (
+              <div key={l.label + l.href} className="flex flex-col gap-0.5">
+                <ExternalLink label={l.label} href={l.href} />
+                {l.note ? (
+                  <p className="text-[12.5px] leading-6 text-black/45 word-keep-all">
+                    {l.note}
+                  </p>
+                ) : null}
+              </div>
+            ))}
           </div>
         </div>
       ) : null}
@@ -174,21 +178,15 @@ export default function ResumeTimelinePage() {
       ],
       links: [
         {
-          label: "Thesis Page (Education & Research)",
-          href: "https://maroon-whimsey-29c.notion.site/Education-Research-2f498311970081de9a9de0058755a0a1?source=copy_link",
-          note:
-            "현재는 요약/원문이 같은 페이지에 구성되어 있습니다. 요약본 1페이지를 별도 분리하면 읽기 동선이 더 좋아집니다.",
+          label: "Thesis Summary (1 page)",
+          href: "https://maroon-whimsey-29c.notion.site/Thesis-Summary-1-page-2f498311970080439791e25db7e3bb8d?source=copy_link",
+          note: "읽기 2분 내 요약본",
         },
-        // {
-        //   label: "Thesis Summary",
-        //   href: "요약본 페이지 링크를 여기에 추가",
-        //   note: "읽기 2분 내 요약본",
-        // },
-        // {
-        //   label: "Thesis (Full Text)",
-        //   href: "전문 PDF/Drive 링크를 여기에 추가",
-        //   note: "검증용 원문 자료",
-        // },
+        {
+          label: "Thesis (Full Text / Archive)",
+          href: "https://maroon-whimsey-29c.notion.site/Education-Research-2f498311970081de9a9de0058755a0a1?source=copy_link",
+          note: "검증용 원문/자료 아카이브",
+        },
       ],
     },
   ];
