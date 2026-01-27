@@ -13,7 +13,7 @@ export default function RootOfThinkingSection() {
 
       <p className="mt-4 max-w-[560px] text-[14px] leading-7 text-black/65">
         서로 다른 문제를 다뤘지만, 모든 프로젝트는 동일한 사고 구조에서 출발했습니다.
-        이 섹션은 결과물이 아니라, 그 결과를 반복 가능하게 만든 사고의 기준을 설명합니다.
+        이 섹션은 결과를 반복 가능하게 만든 사고의 기준을 설명합니다.
       </p>
 
       <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -52,8 +52,7 @@ export default function RootOfThinkingSection() {
             Meaning emerges from relations
           </h3>
           <p className="mt-3 text-[13.5px] leading-6 text-black/70">
-            의미와 리스크는 단일 요소가 아니라,
-            요소들이 연결되는 방식에서 발생합니다.
+            의미와 리스크는 요소들이 연결되는 방식에서 발생합니다.
           </p>
           <p className="mt-3 text-[12px] text-black/45">
             Applied in Empty House CPS
