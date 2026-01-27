@@ -4,12 +4,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import RootOfThinkingSection from "./components/root-thinking/RootOfThinkingSection";
+import { track } from "@vercel/analytics";
 
 /* ---------- 공통 컴포넌트 ---------- */
 
-const NavLink = ({ href, label }: { href: string; label: string }) => (
+const NavLink = ({
+  href,
+  label,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  onClick?: () => void;
+}) => (
   <a
     href={href}
+    onClick={onClick}
     className="text-[13px] text-black/60 hover:text-black transition"
   >
     {label}
@@ -53,22 +63,31 @@ const Card = ({ children }: { children: React.ReactNode }) => (
 const ResumeInternalLink = ({
   className,
   children,
+  onClick,
 }: {
   className?: string;
   children: React.ReactNode;
-}) => <Link href="/resume" className={className}>{children}</Link>;
+  onClick?: () => void;
+}) => (
+  <Link href="/resume" className={className} onClick={onClick}>
+    {children}
+  </Link>
+);
 
 const NotionOverviewLink = ({
   className,
   children,
+  onClick,
 }: {
   className?: string;
   children: React.ReactNode;
+  onClick?: () => void;
 }) => {
   const url = process.env.NEXT_PUBLIC_RESUME_URL?.trim();
   if (!url) return null;
+
   return (
-    <a href={url} target="_blank" rel="noreferrer" className={className}>
+    <a href={url} target="_blank" rel="noreferrer" className={className} onClick={onClick}>
       {children}
     </a>
   );
@@ -81,6 +100,12 @@ export default function Page() {
   const [showEmail, setShowEmail] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const toggleEmailBanner = () => {
+    // ✅ Contact 섹션에서 Email 버튼 클릭 트래킹
+    track("cta_click", { cta: "contact_email_toggle", location: "contact_section" });
+    setShowEmail((v) => !v);
+  };
+
   const copyEmail = async () => {
     try {
       await navigator.clipboard.writeText(EMAIL);
@@ -92,6 +117,10 @@ export default function Page() {
       document.execCommand("copy");
       document.body.removeChild(el);
     }
+
+    // ✅ Copy 클릭 트래킹
+    track("cta_click", { cta: "contact_email_copy", location: "contact_section" });
+
     setCopied(true);
     setTimeout(() => setCopied(false), 2200);
   };
@@ -122,11 +151,24 @@ export default function Page() {
           </div>
 
           <nav className="hidden md:flex items-center gap-5">
-            <NavLink href="/projects" label="Projects" />
-            <ResumeInternalLink className="text-[13px] text-black/60 hover:text-black transition">
+            <NavLink
+              href="/projects"
+              label="Projects"
+              onClick={() => track("nav_click", { target: "projects" })}
+            />
+
+            <ResumeInternalLink
+              className="text-[13px] text-black/60 hover:text-black transition"
+              onClick={() => track("nav_click", { target: "resume_overview" })}
+            >
               Resume
             </ResumeInternalLink>
-            <NavLink href="#contact" label="Contact" />
+
+            <NavLink
+              href="#contact"
+              label="Contact"
+              onClick={() => track("nav_click", { target: "contact" })}
+            />
           </nav>
         </div>
       </header>
@@ -143,17 +185,23 @@ export default function Page() {
 
           <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => setShowEmail((v) => !v)}
+              onClick={toggleEmailBanner}
               className="rounded-full bg-black px-4 py-2 text-[13px] font-medium text-white hover:opacity-90 transition"
             >
               Email
             </button>
 
-            <ResumeInternalLink className="rounded-full border border-black/10 bg-white px-4 py-2 text-[13px] font-medium text-black/70 hover:text-black transition">
+            <ResumeInternalLink
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-[13px] font-medium text-black/70 hover:text-black transition"
+              onClick={() => track("cta_click", { cta: "resume_overview", location: "contact_section" })}
+            >
               Resume(Overview)
             </ResumeInternalLink>
 
-            <NotionOverviewLink className="rounded-full border border-black/10 bg-white px-4 py-2 text-[13px] font-medium text-black/70 hover:text-black transition">
+            <NotionOverviewLink
+              className="rounded-full border border-black/10 bg-white px-4 py-2 text-[13px] font-medium text-black/70 hover:text-black transition"
+              onClick={() => track("cta_click", { cta: "notion_overview", location: "contact_section" })}
+            >
               Notion Overview
             </NotionOverviewLink>
           </div>
