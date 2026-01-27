@@ -37,3 +37,7 @@
 ```bash
 npm install
 npm run dev
+
+## Contact
+- Email: paulseongminpark@gmail.com
+
