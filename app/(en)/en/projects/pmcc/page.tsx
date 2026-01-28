@@ -1,3 +1,5 @@
+﻿
+
 "use client";
 
 import Image from "next/image";
@@ -15,7 +17,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
      - moodboard.jpeg
      - palette.PNG
      - pmcc_insta1.png ... pmcc_insta5.png
-     - pmcc_survey.csv
+     - pmcc_survey_en.csv
+
 ========================================================= */
 
 /* ---------------- UI Components ---------------- */
@@ -133,7 +136,7 @@ function Modal({
     <div className="fixed inset-0 z-[60]">
       <button
         type="button"
-        aria-label="닫기"
+        aria-label="Close"
         onClick={onClose}
         className="absolute inset-0 bg-black/55"
       />
@@ -150,7 +153,7 @@ function Modal({
             onClick={onClose}
             className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-3 py-1.5 text-[12px] text-black/70 hover:bg-black/[0.03] transition"
           >
-            닫기
+            Close
           </button>
         </div>
         <div className="max-h-[78vh] overflow-auto p-5">{children}</div>
@@ -182,28 +185,23 @@ function LightboxImage({
         <ImgCard
           src={src}
           alt={alt}
-          caption={caption ? `${caption} (클릭하여 확대)` : "클릭하여 확대"}
+          caption={caption ? `${caption} (Click to enlarge)` : "Click to enlarge"}
           aspect="square"
           coverClassName={coverClassName ?? "object-center"}
         />
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title={alt}>
-  {/* ✅ 스크롤 컨테이너: 여기서 좌우/상하 스크롤이 생김 */}
-  <div className="overflow-auto max-h-[80vh] [scrollbar-gutter:stable]">
-    {/* ✅ 내용이 컨테이너보다 커지도록 min-w/min-h 부여 → 가로/세로 스크롤 트리거 */}
-    <div className="relative min-w-[1200px] min-h-[800px]">
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        className="object-contain"
-        sizes="(max-width: 1100px) 92vw, 1100px"
-      />
-    </div>
-  </div>
-</Modal>
-
+        <div className="relative w-full aspect-[16/10] overflow-hidden rounded-[18px] border border-black/10 bg-white">
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            className="object-contain"
+            sizes="(max-width: 1100px) 92vw, 1100px"
+          />
+        </div>
+      </Modal>
     </>
   );
 }
@@ -225,13 +223,13 @@ function CompareTable({
         <div className="px-5 py-4">
           <p className="text-[12px] text-black/45">{leftTitle}</p>
           <p className="mt-1 text-[13px] font-medium text-black/75">
-            측정 가능한 성취 지표
+            Measurable achievement indicators
           </p>
         </div>
         <div className="border-l border-black/10 px-5 py-4">
           <p className="text-[12px] text-black/45">{rightTitle}</p>
           <p className="mt-1 text-[13px] font-medium text-black/75">
-            실제 행동 변화를 만든 신호
+            Signals that created actual behavioral change
           </p>
         </div>
       </div>
@@ -251,7 +249,7 @@ function CompareTable({
 
       <div className="border-t border-black/10 bg-white px-5 py-4">
         <p className="text-[12px] leading-6 text-black/45">
-          핵심은 “성취를 더 올리기”가 아니라, 신호를 읽어 “상태를 더 안정적으로 재현하기”였습니다.
+          The key was not "increasing achievement" but "reading signals to reproduce states more stably."
         </p>
       </div>
     </div>
@@ -289,10 +287,7 @@ type Slide = { src: string; alt: string; caption: string; imgClassName?: string 
 
 function InstaSlider({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0);
-
-  // ✅ 추가: 확대 모달 상태
   const [open, setOpen] = useState(false);
-
   const touch = useRef<{ x: number; y: number; t: number } | null>(null);
 
   const clamp = (n: number) => Math.max(0, Math.min(slides.length - 1, n));
@@ -302,15 +297,15 @@ function InstaSlider({ slides }: { slides: Slide[] }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!open) return; // ✅ 모달 열렸을 때만 키로 이동
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
-      // ✅ 추가: ESC로 닫기(원하시면 유지)
       if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
+  }, [open, index]);
 
   const current = slides[index];
 
@@ -338,12 +333,12 @@ function InstaSlider({ slides }: { slides: Slide[] }) {
             touch.current = null;
           }}
         >
-          {/* ✅ 변경: 이미지 클릭 시 모달 오픈 */}
+          {/* ✅ 이미지 클릭 → 모달 오픈 */}
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="absolute inset-0 block"
-            aria-label="이미지 확대 보기"
+            aria-label="Open image"
+            className="absolute inset-0 z-[1] block"
           >
             <Image
               src={current.src}
@@ -354,30 +349,32 @@ function InstaSlider({ slides }: { slides: Slide[] }) {
             />
           </button>
 
+          {/* 그라데이션 오버레이는 클릭 막지 않게 pointer-events-none */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/0 to-black/0" />
 
+          {/* 좌우 버튼은 이미지 위로 떠야 하므로 z-index 올림 */}
           <button
             type="button"
             onClick={prev}
-            aria-label="이전"
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-black/30 px-3 py-2 text-[12px] text-white backdrop-blur hover:bg-black/45 transition"
+            aria-label="Previous"
+            className="absolute left-3 top-1/2 z-[2] -translate-y-1/2 rounded-full border border-white/25 bg-black/30 px-3 py-2 text-[12px] text-white backdrop-blur hover:bg-black/45 transition"
           >
             ←
           </button>
           <button
             type="button"
             onClick={next}
-            aria-label="다음"
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-black/30 px-3 py-2 text-[12px] text-white backdrop-blur hover:bg-black/45 transition"
+            aria-label="Next"
+            className="absolute right-3 top-1/2 z-[2] -translate-y-1/2 rounded-full border border-white/25 bg-black/30 px-3 py-2 text-[12px] text-white backdrop-blur hover:bg-black/45 transition"
           >
             →
           </button>
 
-          <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-black/30 px-3 py-1 text-[12px] text-white backdrop-blur">
+          <div className="absolute right-3 top-3 z-[2] rounded-full border border-white/20 bg-black/30 px-3 py-1 text-[12px] text-white backdrop-blur">
             {index + 1} / {slides.length}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4">
+          <div className="absolute bottom-0 left-0 right-0 z-[2] p-4">
             <p className="text-[12.5px] leading-6 text-white/92">{current.caption}</p>
           </div>
         </div>
@@ -389,69 +386,60 @@ function InstaSlider({ slides }: { slides: Slide[] }) {
                 key={i}
                 type="button"
                 onClick={() => go(i)}
-                aria-label={`슬라이드 ${i + 1}`}
+                aria-label={`Slide ${i + 1}`}
                 className={`h-1.5 w-1.5 rounded-full transition ${
                   i === index ? "bg-black/55" : "bg-black/15 hover:bg-black/25"
                 }`}
               />
             ))}
           </div>
-          <p className="text-[12px] text-black/45">좌우 클릭/스와이프로 넘길 수 있습니다.</p>
+          <p className="text-[12px] text-black/45">Click the image to zoom.</p>
         </div>
       </div>
 
-      
-      {/* ✅ 추가: 원본 비율 확대 모달 */}
-<Modal open={open} onClose={() => setOpen(false)} title={current.alt}>
-  {/* ✅ 프레임 높이를 고정: 화살표 기준이 절대 흔들리지 않음 */}
-  <div className="relative h-[80vh]">
-    {/* ✅ 스크롤은 프레임 내부에서만 */}
-    <div className="h-full overflow-auto [scrollbar-gutter:stable]">
-      <div className="mx-auto w-full max-w-[1200px] py-2">
-        <Image
-          src={current.src}
-          alt={current.alt}
-          width={1200}
-          height={1200}
-          className="h-auto w-full rounded-[18px] border border-black/10 bg-white"
-          style={{ objectFit: "contain" }}
-          sizes="(max-width: 1200px) 92vw, 1200px"
-        />
-        <p className="mt-3 text-[12.5px] leading-6 text-black/60">
-          {current.caption}
-        </p>
-      </div>
-    </div>
+      {/* ✅ 확대 모달 (원본비율 + 모달에서도 좌/우 이동 + 화살표 위치 고정) */}
+      <Modal open={open} onClose={() => setOpen(false)} title={current.alt}>
+        <div className="relative h-[80vh]">
+          <div className="h-full overflow-auto [scrollbar-gutter:stable]">
+            <div className="mx-auto w-full max-w-[1200px] py-2">
+              <Image
+                src={current.src}
+                alt={current.alt}
+                width={1200}
+                height={1200}
+                className="h-auto w-full rounded-[18px] border border-black/10 bg-white"
+                style={{ objectFit: "contain" }}
+                sizes="(max-width: 1200px) 92vw, 1200px"
+              />
+              <p className="mt-3 text-[12.5px] leading-6 text-black/60">{current.caption}</p>
+            </div>
+          </div>
 
-    {/* ✅ 좌/우 포인터: 고정 프레임 기준 중앙 고정 */}
-    <button
-      type="button"
-      onClick={prev}
-      aria-label="이전"
-      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white/80 px-3 py-2 text-[12px] text-black/70 backdrop-blur hover:bg-white transition disabled:opacity-40"
-      disabled={index === 0}
-    >
-      ←
-    </button>
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Previous"
+            disabled={index === 0}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white/80 px-3 py-2 text-[12px] text-black/70 backdrop-blur hover:bg-white transition disabled:opacity-40"
+          >
+            ←
+          </button>
 
-    <button
-      type="button"
-      onClick={next}
-      aria-label="다음"
-      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white/80 px-3 py-2 text-[12px] text-black/70 backdrop-blur hover:bg-white transition disabled:opacity-40"
-      disabled={index === slides.length - 1}
-    >
-      →
-    </button>
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Next"
+            disabled={index === slides.length - 1}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white/80 px-3 py-2 text-[12px] text-black/70 backdrop-blur hover:bg-white transition disabled:opacity-40"
+          >
+            →
+          </button>
 
-    {/* ✅ 인덱스 배지: 항상 같은 위치 */}
-    <div className="absolute right-3 top-3 rounded-full border border-black/10 bg-white/80 px-3 py-1 text-[12px] text-black/70 backdrop-blur">
-      {index + 1} / {slides.length}
-    </div>
-  </div>
-</Modal>
-
-
+          <div className="absolute right-3 top-3 rounded-full border border-black/10 bg-white/80 px-3 py-1 text-[12px] text-black/70 backdrop-blur">
+            {index + 1} / {slides.length}
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }
@@ -520,7 +508,7 @@ function useCSVData(csvUrl: string) {
         setErr(null);
 
         const res = await fetch(csvUrl, { cache: "no-store" });
-        if (!res.ok) throw new Error(`CSV 로드 실패 (${res.status})`);
+        if (!res.ok) throw new Error(`Failed to load CSV (${res.status})`);
 
         const text = await res.text();
         const parsed = parseCSV(text);
@@ -535,7 +523,7 @@ function useCSVData(csvUrl: string) {
         setLoading(false);
       } catch (e: any) {
         if (!alive) return;
-        setErr(e?.message ?? "CSV 로드 중 오류가 발생했습니다.");
+        setErr(e?.message ?? "An error occurred while loading CSV.");
         setLoading(false);
       }
     }
@@ -577,45 +565,48 @@ function CSVTable({
   const slice = typeof maxRows === "number" ? rows.slice(0, maxRows) : rows;
 
   return (
-    <div className="overflow-hidden rounded-[16px] border border-black/10">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="bg-black/[0.03]">
-              {headers.map((h, i) => (
-                <th
-                  key={i}
-                  className="whitespace-nowrap px-4 py-3 text-[12px] font-medium text-black/55"
+  <div className="overflow-hidden rounded-[16px] border border-black/10">
+    {/* ✅ horizontal scroll */}
+    <div className="overflow-x-auto [scrollbar-gutter:stable]">
+      <table className="min-w-[1200px] w-full border-collapse text-left">
+        <thead>
+          <tr className="bg-black/[0.03]">
+            {headers.map((h, i) => (
+              <th
+                key={i}
+                className="whitespace-nowrap px-4 py-3 text-[12px] font-medium text-black/55"
+              >
+                {h || `col_${i + 1}`}
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        <tbody>
+          {slice.map((r, ri) => (
+            <tr key={ri} className="border-t border-black/10">
+              {headers.map((_, ci) => (
+                <td
+                  key={ci}
+                  className="px-4 py-3 text-[12.5px] text-black/70 align-top whitespace-nowrap"
                 >
-                  {h || `col_${i + 1}`}
-                </th>
+                  {r[ci] ?? ""}
+                </td>
               ))}
             </tr>
-          </thead>
-          <tbody>
-            {slice.map((r, ri) => (
-              <tr key={ri} className="border-t border-black/10">
-                {headers.map((_, ci) => (
-                  <td
-                    key={ci}
-                    className="px-4 py-3 text-[12.5px] text-black/70 align-top"
-                  >
-                    {r[ci] ?? ""}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {typeof maxRows === "number" && rows.length > maxRows ? (
-        <div className="border-t border-black/10 bg-white px-4 py-3 text-[12px] text-black/45">
-          미리보기는 상위 {maxRows}행만 표시됩니다.
-        </div>
-      ) : null}
+          ))}
+        </tbody>
+      </table>
     </div>
-  );
+
+    {typeof maxRows === "number" && rows.length > maxRows ? (
+      <div className="border-t border-black/10 bg-white px-4 py-3 text-[12px] text-black/45">
+        Preview shows only the first {maxRows} rows.
+      </div>
+    ) : null}
+  </div>
+);
+
 }
 
 function isMetaHeader(h: string) {
@@ -646,10 +637,10 @@ function PivotView({ headers, row }: { headers: string[]; row: string[] }) {
           <thead>
             <tr className="bg-black/[0.03]">
               <th className="whitespace-nowrap px-4 py-3 text-[12px] font-medium text-black/55">
-                질문(컬럼)
+                Question (Column)
               </th>
               <th className="whitespace-nowrap px-4 py-3 text-[12px] font-medium text-black/55">
-                응답(값)
+                Response (Value)
               </th>
             </tr>
           </thead>
@@ -667,7 +658,7 @@ function PivotView({ headers, row }: { headers: string[]; row: string[] }) {
             {pairs.length === 0 ? (
               <tr className="border-t border-black/10">
                 <td className="px-4 py-3 text-[12.5px] text-black/55" colSpan={2}>
-                  표시할 응답이 없습니다.
+                  No responses to display.
                 </td>
               </tr>
             ) : null}
@@ -686,8 +677,7 @@ function MechanismDiagram() {
       <div className="p-5">
         <p className="text-[12px] text-black/45">PMCC Experience Mechanism</p>
         <p className="mt-2 text-[13.5px] leading-7 text-black/70">
-          PMCC는 활동을 설계한 것이 아니라, <strong>상태(state)</strong>를 만들고 그 상태를 유지·조정하는
-          메커니즘을 설계한 프로젝트입니다.
+          PMCC did not design activities but rather designed a mechanism to create and maintain <strong>states</strong>.
         </p>
       </div>
 
@@ -743,27 +733,26 @@ function MechanismDiagram() {
             ))}
 
             <g fontSize="12" fill="rgba(0,0,0,0.62)">
-              <text x="86" y="138">• Pace / 강도</text>
-              <text x="86" y="158">• 그룹 규모</text>
-              <text x="86" y="178">• 온보딩 룰</text>
-              <text x="86" y="198">• 역할 배치</text>
+              <text x="86" y="138">• Pace / Intensity</text>
+              <text x="86" y="158">• Group size</text>
+              <text x="86" y="178">• Onboarding rules</text>
+              <text x="86" y="198">• Role assignment</text>
 
-              <text x="316" y="138">• 긴장 완화</text>
-              <text x="316" y="158">• 비교·평가 감소</text>
-              <text x="316" y="178">• 심리적 안전감</text>
+              <text x="316" y="138">• Tension relief</text>
+              <text x="316" y="158">• Reduced comparison</text>
+              <text x="316" y="178">• Psychological safety</text>
 
-              <text x="546" y="138">• 대화 시작 속도</text>
-              <text x="546" y="158">• 침묵의 밀도</text>
-              <text x="546" y="178">• 체류 시간</text>
-              <text x="546" y="198">• 피드백 키워드</text>
+              <text x="546" y="138">• Conversation start speed</text>
+              <text x="546" y="158">• Silence density</text>
+              <text x="546" y="178">• Dwell time</text>
+              <text x="546" y="198">• Feedback keywords</text>
 
-              <text x="776" y="138">• 페이스 조정</text>
-              <text x="776" y="158">• 대화 구조 변경</text>
-              <text x="776" y="178">• 질문 개입/중단</text>
-              <text x="776" y="198">• 세션 길이 조정</text>
+              <text x="776" y="138">• Pace adjustment</text>
+              <text x="776" y="158">• Conversation structure change</text>
+              <text x="776" y="178">• Question intervention/stop</text>
+              <text x="776" y="198">• Session length adjustment</text>
 
-              {/* ✅ Output 텍스트 강화: '결과물'스러운 용어로 */}
-              <text x="316" y="388">• 예측 가능한 재참여</text>
+              <text x="316" y="388">• Predictable re-engagement</text>
               <text x="316" y="408">• Organic referral</text>
               <text x="316" y="428">• Community loyalty</text>
             </g>
@@ -813,13 +802,13 @@ function MechanismDiagram() {
             />
 
             <text x="70" y="500" fontSize="12" fill="rgba(0,0,0,0.45)">
-              Input → State → Signals → Decision → Output (상태를 만들고, 신호로 조정하고, 결과를 안정화)
+              Input → State → Signals → Decision → Output (Create state, adjust by signals, stabilize outcome)
             </text>
           </svg>
         </div>
 
         <p className="mt-4 px-1 text-[12px] leading-6 text-black/55">
-          관측 신호를 “느낌”으로 두지 않고, 역할 기반 개입(Moderator Actions)으로 연결하는 구조를 고정했습니다.
+          Observed signals were not left as "feelings" but connected to role-based interventions (Moderator Actions).
         </p>
       </div>
     </div>
@@ -941,8 +930,8 @@ function LikertHistogram({
         <p className="text-[12px] text-black/45">Signal Summary</p>
         <h3 className="mt-2 text-[15px] font-semibold tracking-[-0.2px]">{title}</h3>
         <p className="mt-2 text-[13.5px] leading-7 text-black/60">
-          평균값보다 <strong>분포 형태</strong>로 해석했습니다. (컬럼:{" "}
-          <span className="text-black/70">{data.label || "미탐지"}</span>)
+          Interpreted as <strong>distribution shape</strong> rather than average. (Column:{" "}
+          <span className="text-black/70">{data.label || "Not detected"}</span>)
         </p>
       </div>
 
@@ -1010,12 +999,10 @@ function LikertHistogram({
         <div className="mt-4 grid gap-2 rounded-[18px] border border-black/10 bg-white px-4 py-3">
           <p className="text-[12px] text-black/45">Reading</p>
           <p className="text-[13px] leading-6 text-black/70">
-            낮은 구간(1–2)은 초기 긴장 해소 실패 가능 구간, 중간(3)은 상태는 형성되었으나 여운이 부족한 구간,
-            높은 구간(4–5)은 체류 및 관계 지속 가능 구간으로 해석했습니다.
+            Low range (1–2) indicates potential failure to relieve initial tension, mid-range (3) indicates state formed but insufficient afterimage, and high range (4–5) indicates sections where dwell time and relationship continuation are possible.
           </p>
           <p className="text-[13px] leading-6 text-black/70">
-            목표는 평균을 올리는 것이 아니라, <strong>저점 구간을 줄이고 고점 구간을 안정적으로 재현</strong>하는
-            것이었습니다.
+            The goal was not to raise the average, but to <strong>reduce the low range and stably reproduce the high range</strong>.
           </p>
           <p className="text-[12px] text-black/45">Valid N: {data.n}</p>
         </div>
@@ -1061,30 +1048,27 @@ function SurveyCSVSection({
       <SectionTitle
         eyebrow="Evidence"
         title="Survey Dataset (CSV)"
-        desc="설문을 운영 판단으로 연결하기 위해, 응답을 CSV로 구조화했습니다."
+        desc="To connect surveys to operational judgments, responses were structured as CSV."
       />
 
-      {/* ✅ Key Insight 박스 추가 */}
+      {/* ✅ Key Insight box added */}
       <div className="rounded-[22px] border border-black/10 bg-white p-5">
         <p className="text-[12px] text-black/45">Key insight</p>
         <p className="mt-2 text-[13.5px] leading-7 text-black/75">
-          재참여 의향이 높게 나타난 응답에서, “편안함/연결감/대화의 밀도” 관련 문항과 키워드가 함께 강화되는 경향이
-          반복적으로 관찰되었습니다. 즉, PMCC의 핵심 성과는 “운동 만족도”가 아니라{" "}
-          <strong>안전감의 형성이 곧 리텐션으로 이어지는 구조</strong>를 만든 점이었습니다.
+          In responses with high re-engagement intention, the tendency of "comfort/connection/conversation density" related questions and keywords being reinforced together was repeatedly observed. That is, the core achievement of PMCC was not "running satisfaction" but <strong>creating a structure where the formation of safety directly leads to retention</strong>.
         </p>
       </div>
 
       <p className="mt-6 text-[14px] leading-7 text-black/70">
-        경험을 “좋았다”로 남기지 않기 위해, 각 회차 이후의 상태를 입력값으로 수집했습니다. 설문 데이터는 만족도를
-        평가하기보다, 다음 운영에서 조정해야 할 조건을 판단하는 기준으로 사용되었습니다.
+        To not leave experience as just "it was good," the state after each session was collected as input. Survey data was used not to evaluate satisfaction, but as criteria to judge conditions that need to be adjusted in the next operation.
       </p>
 
-      <div className="mt-6 rounded-[22px] border border-black/10 bg-white p-5">
+      <div className="mt-6 mx-auto w-full max-w-[1200px] rounded-[22px] border border-black/10 bg-white p-5">
         {loading ? (
-          <p className="text-[13.5px] text-black/60">CSV를 불러오는 중입니다…</p>
+          <p className="text-[13.5px] text-black/60">Loading CSV…</p>
         ) : err ? (
           <p className="text-[13.5px] text-black/60">
-            CSV를 불러오지 못했습니다: <span className="text-black/75">{err}</span>
+            Failed to load CSV: <span className="text-black/75">{err}</span>
           </p>
         ) : (
           <>
@@ -1092,7 +1076,7 @@ function SurveyCSVSection({
               <div>
                 <p className="text-[12px] text-black/45">Data Snapshot</p>
                 <p className="mt-2 text-[13.5px] leading-7 text-black/70">
-                  기간 <strong>{stats?.period ?? "-"}</strong>
+                  Period <strong>{stats?.period ?? "-"}</strong>
                 </p>
               </div>
 
@@ -1102,14 +1086,14 @@ function SurveyCSVSection({
                   onClick={() => setOpen(true)}
                   className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-[12.5px] text-black/70 hover:bg-black/[0.03] transition"
                 >
-                  포트폴리오에서 전체 보기
+                  View full in portfolio
                 </button>
               </div>
             </div>
 
             <div className="mt-6">
-              <p className="mb-2 text-[12px] text-black/45">Preview (상위 10행)</p>
-              <CSVTable headers={headers} rows={rows} maxRows={10} />
+              <p className="mb-2 text-[12px] text-black/45">Preview (first 20 rows)</p>
+              <CSVTable headers={headers} rows={rows} maxRows={20} />
             </div>
 
             <Modal open={open} onClose={() => setOpen(false)} title="PMCC Survey CSV">
@@ -1119,7 +1103,7 @@ function SurveyCSVSection({
                   <input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="검색어를 입력하세요"
+                    placeholder="Enter search term"
                     className="mt-2 w-full rounded-[14px] border border-black/10 bg-white px-3 py-2 text-[13px] text-black/75 outline-none focus:border-black/20"
                   />
                 </div>
@@ -1135,10 +1119,10 @@ function SurveyCSVSection({
                       <option value={100}>100</option>
                       <option value={300}>300</option>
                       <option value={1000}>1000</option>
-                      <option value={999999}>전체</option>
+                      <option value={999999}>All</option>
                     </select>
                     <span className="text-[12px] text-black/45 whitespace-nowrap">
-                      (필터 후 {filteredRows.length}행)
+                      ({filteredRows.length} rows after filter)
                     </span>
                   </div>
                 </div>
@@ -1155,7 +1139,7 @@ function SurveyCSVSection({
                         : "border-black/10 bg-white text-black/70 hover:bg-black/[0.03]"
                     }`}
                   >
-                    원본 테이블
+                    Original table
                   </button>
                   <button
                     type="button"
@@ -1166,13 +1150,13 @@ function SurveyCSVSection({
                         : "border-black/10 bg-white text-black/70 hover:bg-black/[0.03]"
                     }`}
                   >
-                    피벗(질문→응답)
+                    Pivot (Question→Response)
                   </button>
                 </div>
 
                 {view === "pivot" ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] text-black/45">응답 선택</span>
+                    <span className="text-[12px] text-black/45">Select response</span>
                     <select
                       value={safePivotIndex}
                       onChange={(e) => setPivotIndex(Number(e.target.value))}
@@ -1180,11 +1164,11 @@ function SurveyCSVSection({
                     >
                       {filteredRows.slice(0, 200).map((_, i) => (
                         <option key={i} value={i}>
-                          {i + 1}번째 응답
+                          Response #{i + 1}
                         </option>
                       ))}
                       {filteredRows.length > 200 ? (
-                        <option value={safePivotIndex}>… (검색으로 좁힌 뒤 선택)</option>
+                        <option value={safePivotIndex}>… (Narrow with search first)</option>
                       ) : null}
                     </select>
                   </div>
@@ -1192,23 +1176,28 @@ function SurveyCSVSection({
               </div>
 
               <div className="mt-4">
-                {view === "table" ? (
-                  <CSVTable headers={headers} rows={viewRows} />
-                ) : (
-                  <PivotView headers={headers} row={pivotRow} />
-                )}
+                <div className="overflow-auto max-h-[70vh] [scrollbar-gutter:stable]">
+                <div className="min-w-[1200px]">
+                  {view === "table" ? (
+                    <CSVTable headers={headers} rows={viewRows} />
+                  ) : (
+                    <PivotView headers={headers} row={pivotRow} />
+                  )}
+                </div>
               </div>
+            </div>
+
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[12px] text-black/45">
-                  피벗 보기는 “한 응답(row)”을 “질문-응답 리스트”로 펼쳐 보여줍니다.
+                  Pivot view expands "one response (row)" into a "question-response list."
                 </p>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
                   className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-[12.5px] text-black/70 hover:bg-black/[0.03] transition"
                 >
-                  닫기
+                  Close
                 </button>
               </div>
             </Modal>
@@ -1225,49 +1214,49 @@ function SurveyCSVSection({
 
 export default function Page() {
   const ASSET = "/images/projects/pmcc";
-  const csvUrl = `${ASSET}/pmcc_survey.csv`;
+  const csvUrl = `${ASSET}/pmcc_survey_en.csv`;
   const csv = useCSVData(csvUrl);
 
-  // Instagram 순서: 1 → 2 → 3 → 4 → 5
+  // Instagram order: 1 → 2 → 3 → 4 → 5
   const instaSlides: Slide[] = [
     {
       src: `${ASSET}/pmcc_insta1.png`,
       alt: "PMCC Instagram 1",
       caption:
-        "Observation: 러닝 이후 체류가 길었던 회차 · Intent: 상태 조건 기록 · Signal: 잔류↑ → 강도 유지",
+        "Observation: Sessions with longer dwell time after running · Intent: Record state conditions · Signal: Retention↑ → Maintain intensity",
       imgClassName: "object-center",
     },
     {
       src: `${ASSET}/pmcc_insta2.png`,
       alt: "PMCC Instagram 2",
       caption:
-        "Observation: 대화가 자연스럽게 시작된 회차 · Intent: 시작 조건 보존 · Signal: 비교↓ → 구조 유지",
+        "Observation: Sessions where conversation started naturally · Intent: Preserve start conditions · Signal: Comparison↓ → Maintain structure",
       imgClassName: "object-center",
     },
     {
       src: `${ASSET}/pmcc_insta3.png`,
       alt: "PMCC Instagram 3",
       caption:
-        "Observation: 긴장 완화 이후 대화 분산 · Intent: 편안한 페이스 유지 · Signal: 말의 속도 안정",
+        "Observation: Conversation dispersed after tension relief · Intent: Maintain comfortable pace · Signal: Speech speed stable",
       imgClassName: "object-[right_center]",
     },
     {
       src: `${ASSET}/pmcc_insta4.png`,
       alt: "PMCC Instagram 4",
       caption:
-        "Observation: 러닝 후 대화 세션에 여운이 남은 회차 · Intent: 마감 루틴 고정 · Signal: 재참여↑",
+        "Observation: Sessions with afterimage remaining in conversation session after running · Intent: Fix closing routine · Signal: Re-engagement↑",
       imgClassName: "object-[right_center]",
     },
     {
       src: `${ASSET}/pmcc_insta5.png`,
       alt: "PMCC Instagram 5",
       caption:
-        "Observation: 기록이 ‘홍보’로 읽히지 않게 조정 · Intent: 상태 외재화 · Signal: 톤 일관성 유지",
+        "Observation: Adjusted so records are not read as 'promotion' · Intent: Externalize state · Signal: Maintain tone consistency",
       imgClassName: "object-[right_center]",
     },
   ];
 
-  // Feedback Loop: 버튼 클릭 시 CSV 20행 미리보기 자동 표시
+  // Feedback Loop: Automatically show CSV 20-row preview when button is clicked
   const [showInlineCSV, setShowInlineCSV] = useState(false);
 
   return (
@@ -1282,23 +1271,19 @@ export default function Page() {
           </h1>
         </div>
 
-        {/* ✅ Hero 첫 문장: 정량 임팩트 → 전환 */}
+        {/* ✅ Hero first sentence: Quantitative impact → Conversion */}
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          러닝 기반 커뮤니티를 0명에서 <strong>168명</strong>까지 확장하며, 재참여가 끊기지 않는 운영 루프를
-          만들었습니다.
+          Expanded a running-based community from 0 to <strong>168 members</strong>, creating an operational loop where re-engagement does not break.
           <br />
-          다만 이 프로젝트의 핵심은 숫자 자체가 아니라, 그 숫자를 만든 <strong>‘상태 설계(State Design)’</strong>
-          였습니다.
+          However, the core of this project was not the numbers themselves, but the <strong>'State Design'</strong> that created those numbers.
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          같은 프로그램이라도 어떤 날은 사람들이 남고, 어떤 날은 자연스럽게 흩어졌습니다. 이 차이는 활동의 완성도보다,
-          경험이 끝났을 때 남아 있는 상태와 여운에서 반복적으로 발생했습니다.
+          Even with the same program, some days people stayed, and some days they dispersed naturally. This difference occurred repeatedly not from the completeness of activities, but from the state and afterimage remaining after the experience ended.
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          이 프로젝트는 러닝을 통해 사람을 모은 기록이 아니라, 경험 이후 남는 상태(state)와 여운(afterimage)을
-          유지·조정하는 기준을 설계한 기록입니다.
+          This project is not a record of gathering people through running, but a record of designing criteria to maintain and adjust the state and afterimage remaining after experience.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -1312,7 +1297,7 @@ export default function Page() {
           <ImgCard
             src={`${ASSET}/hero_run_blur.JPG`}
             alt="PMCC hero"
-            caption="러닝 장면을 ‘기록’이 아니라, 상태의 톤을 전달하는 장면으로 사용했습니다."
+            caption="Running scenes were used not as 'records' but as scenes conveying the tone of the state."
             priority
             aspect="square"
             coverClassName="object-[right_center]"
@@ -1326,29 +1311,27 @@ export default function Page() {
       <section>
         <SectionTitle
           eyebrow="Problem"
-          title="What seemed to matter, but didn’t"
-          desc="측정 가능한 성취 지표와 실제 행동 변화 사이에서 불일치가 반복되었습니다."
+          title="What seemed to matter, but didn't"
+          desc="Discrepancies repeatedly occurred between measurable achievement indicators and actual behavioral change."
         />
 
         <p className="text-[14px] leading-7 text-black/70">
-          초기 운영에서는 거리, 페이스, 코스 같은 측정 가능한 요소가 경험의 질을 결정할 것이라 가정했습니다. 그러나
-          실제 이탈과 재참여는 이러한 지표와 일관되게 연결되지 않았습니다.
+          In early operations, it was assumed that measurable elements like distance, pace, and course would determine the quality of experience. However, actual attrition and re-engagement were not consistently connected to these indicators.
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          문제는 성과가 아니라, 성취 지표(거리, 페이스)와 실제 재참여(retention) 사이의 괴리를 설명하고 조정할 기준이
-          없었다는 점이었습니다.
+          The problem was not performance, but that there were no criteria to explain and adjust the gap between achievement indicators (distance, pace) and actual re-engagement (retention).
         </p>
 
-        {/* ✅ Problem 대조 테이블 추가 */}
+        {/* ✅ Problem contrast table added */}
         <div className="mt-8">
           <CompareTable
             leftTitle="As-is"
             rightTitle="To-be"
             rows={[
-              { left: "거리 (5km, 10km)", right: "대화 시작 속도" },
-              { left: "페이스 (5'30\", 6'00\")", right: "러닝 후 체류 시간" },
-              { left: "코스 (한강, 올림픽공원)", right: "침묵의 밀도" },
+              { left: "Distance (5km, 10km)", right: "Conversation start speed" },
+              { left: "Pace (5'30\", 6'00\")", right: "Dwell time after running" },
+              { left: "Course (Hangang, Olympic Park)", right: "Silence density" },
             ]}
           />
         </div>
@@ -1361,17 +1344,15 @@ export default function Page() {
         <SectionTitle
           eyebrow="Observation"
           title="What kept happening instead"
-          desc="정량화하기 어려운 신호들이 반복적으로 행동 변화를 만들어냈습니다."
+          desc="Signals that were difficult to quantify repeatedly created behavioral change."
         />
 
         <p className="text-[14px] leading-7 text-black/70">
-          재참여가 발생한 회차에는 공통적인 상태 변화가 관찰되었습니다. 참여자 간 비교와 긴장이 완화되고,
-          심리적 안전감(psychological safety)이 형성된 경우에만 체류 시간이 늘어났습니다.
+          Common state changes were observed in sessions where re-engagement occurred. Dwell time increased only when comparison and tension between participants were relieved and psychological safety was formed.
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          이 신호들은 정량화되기 어렵지만, 반복적으로 동일한 행동 변화를 만들어냈습니다. 그래서 PMCC는 “활동”이 아니라
-          “상태”를 설계 대상으로 삼았습니다.
+          These signals were difficult to quantify, but repeatedly created the same behavioral change. Therefore, PMCC took "state" rather than "activity" as the design target.
         </p>
       </section>
 
@@ -1382,7 +1363,7 @@ export default function Page() {
         <SectionTitle
           eyebrow="Mechanism"
           title="How retention was produced"
-          desc="Input → State → Signals → Decision → Output을 한 장에 고정했습니다."
+          desc="Fixed Input → State → Signals → Decision → Output in one diagram."
         />
         <MechanismDiagram />
       </section>
@@ -1394,27 +1375,26 @@ export default function Page() {
         <SectionTitle
           eyebrow="Shift"
           title="Reframing the Run"
-          desc="러닝을 목표가 아니라, 상태를 만들기 위한 조건으로 재정의했습니다."
+          desc="Running was redefined not as a goal, but as a condition to create state."
         />
 
         <p className="text-[14px] leading-7 text-black/70">
-          러닝은 목적이 아니라, 심리적 방어기제를 낮추는 전처리(pre-processing) 조건으로 재정의되었습니다. 이후 운영의
-          기준은 “얼마나 잘 달렸는가”에서 “대화를 시작할 수 있는 상태가 형성되었는가”로 이동했습니다.
+          Running was redefined not as a purpose, but as a pre-processing condition to lower psychological defense mechanisms. After that, the operational criteria shifted from "how well we ran" to "whether a state where conversation can begin was formed."
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          프로그램은 성취를 만들기보다, 그 상태를 방해하지 않도록 조정되었습니다.
+          The program was adjusted not to create achievement, but to not interfere with that state.
         </p>
 
-        {/* ✅ Shift: Before/After 대비 블록 */}
+        {/* ✅ Shift: Before/After contrast block */}
         <div className="mt-8">
           <CompareTable
             leftTitle="As-is"
             rightTitle="To-be"
             rows={[
-              { left: "KPI: 거리/속도/완주", right: "KPI: 대화의 밀도/심리적 안전감" },
-              { left: "Focus: 신체적 성취", right: "Focus: 정서적 완화(De-escalation)" },
-              { left: "Role: 페이스메이커", right: "Role: 상태 설계자(State Architect)" },
+              { left: "KPI: Distance/Speed/Completion", right: "KPI: Conversation density/Psychological safety" },
+              { left: "Focus: Physical achievement", right: "Focus: Emotional de-escalation" },
+              { left: "Role: Pacemaker", right: "Role: State Architect" },
             ]}
           />
         </div>
@@ -1427,33 +1407,30 @@ export default function Page() {
         <SectionTitle
           eyebrow="Brand System"
           title="Branding as operations"
-          desc="브랜딩은 표현이 아니라, 운영자가 바뀌어도 동일한 상태를 재현하는 장치였습니다."
+          desc="Branding was not expression, but a device to reproduce the same state even when operators change."
         />
 
         <p className="text-[14px] leading-7 text-black/70">
-          PMCC의 브랜딩은 이미지를 만드는 일이 아니라, 다양한 사람들이 같은 기준 아래에서 머물 수 있게 하는 조건을
-          고정하는 작업이었습니다. 색, 이미지, 기록 방식은 모두 특정 성격을 강조하기보다 비교와 평가가 작동하지 않는
-          상태를 유지하도록 설계되었습니다.
+          PMCC's branding was not about creating images, but about fixing conditions that allow various people to stay under the same criteria. Color, images, and recording methods were all designed not to emphasize specific characteristics but to maintain a state where comparison and evaluation do not operate.
         </p>
 
-        {/* ✅ 기능적 이유(affordance)로 강화 */}
+        {/* ✅ Reinforced with functional reasoning (affordance) */}
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          컬러와 타이포는 심미적 요소를 넘어, 운영자가 개입하지 않아도 참여자가 “여기서는 이렇게 행동하면 된다”를
-          직감하게 만드는 <strong>UX 장치(affordance)</strong>로 작동하도록 설계되었습니다.
+          Color and typography were designed not just as aesthetic elements, but as <strong>UX devices (affordance)</strong> that make participants intuitively understand "this is how to behave here" without operator intervention.
         </p>
 
         <div className="mt-8 grid items-stretch gap-4 md:grid-cols-2">
           <ImgCard
             src={`${ASSET}/logo_blue.JPG`}
             alt="PMCC logo blue"
-            caption="운영자가 바뀌어도 동일한 톤을 유지하기 위한 시각 기준점"
+            caption="Visual reference point to maintain the same tone even when operators change"
             aspect="square"
             coverClassName="object-center"
           />
           <ImgCard
             src={`${ASSET}/poster_coffee1.JPG`}
             alt="PMCC poster coffee"
-            caption="‘운동’이 아니라 ‘관계’에 기대치가 정렬되도록, 커피 대화를 메인 장면으로 고정"
+            caption="Fixed coffee conversation as the main scene so expectations align with 'relationship' rather than 'exercise'"
             aspect="square"
             coverClassName="object-center"
           />
@@ -1463,13 +1440,13 @@ export default function Page() {
           <LightboxImage
             src={`${ASSET}/visaul_dev_notes.jpeg`}
             alt="PMCC visual development notes"
-            caption="Observation: 흔들리는 룰 · Intent: 문장화 · Signal: 운영 재현성"
+            caption="Observation: Shaky rules · Intent: Verbalize · Signal: Operational reproducibility"
             coverClassName="object-center"
           />
           <LightboxImage
             src={`${ASSET}/moodboard.jpeg`}
             alt="PMCC moodboard"
-            caption="Observation: 무드가 섞이면 기준이 흐려짐 · Intent: 분리 · Signal: 선택 속도↑"
+            caption="Observation: Mixed moods blur criteria · Intent: Separate · Signal: Selection speed↑"
             coverClassName="object-center"
           />
         </div>
@@ -1478,25 +1455,23 @@ export default function Page() {
           <ImgCard
             src={`${ASSET}/palette.PNG`}
             alt="PMCC palette"
-            caption="Palette: 운영 개입 없이도 톤이 유지되도록, 선택지를 좁히는 기준값."
+            caption="Palette: Reference values that narrow choices so tone is maintained without operational intervention."
             aspectClassName="aspect-[16/4]"
             contain
           />
         </div>
 
-            <div className="mx-auto w-full max-w-[1200px] rounded-[22px] border border-black/10 bg-white p-6">
-
+        <div className="mt-6 rounded-[22px] border border-black/10 bg-white p-5">
           <p className="text-[12px] text-black/45">Color</p>
           <p className="mt-2 text-[13.5px] leading-7 text-black/80">
-            컬러는 ‘개성’보다 ‘태도’를 먼저 전달합니다. 첫 접점에서 긴장을 낮추고, 비교가 작동하지 않는 분위기를
-            선행시키는 신호로 사용했습니다.
+            Color conveys 'attitude' before 'personality.' Used as a signal to lower tension at the first touchpoint and preempt an atmosphere where comparison does not operate.
           </p>
         </div>
 
         <div className="mt-10 rounded-[22px] border border-black/10 bg-white p-5">
           <p className="text-[12px] text-black/45">One-line principle</p>
           <p className="mt-2 text-[13.5px] leading-7 text-black/80">
-            브랜드는 정체성을 고정하는 것이 아니라, 서로 다른 상태들이 안전하게 만날 수 있게 만드는 기준입니다.
+            Brand is not about fixing identity, but creating criteria that allow different states to meet safely.
           </p>
         </div>
       </section>
@@ -1508,7 +1483,7 @@ export default function Page() {
         <SectionTitle
           eyebrow="Archive"
           title="Instagram as an interface"
-          desc="인스타그램은 기록이 아니라, 상태를 외재화(externalization)하는 표면으로 사용되었습니다."
+          desc="Instagram was used not as records, but as a surface to externalize state."
         />
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -1524,24 +1499,24 @@ export default function Page() {
           </a>
         </div>
 
-        {/* ✅ 캡션 구조를 슬라이더 위에서 먼저 공개 */}
+        {/* ✅ Reveal caption structure above slider first */}
         <div className="mb-4 rounded-[22px] border border-black/10 bg-black/[0.02] px-5 py-4">
           <p className="text-[12px] text-black/45">Caption structure</p>
           <div className="mt-2 grid gap-1 text-[13px] leading-6 text-black/70">
-            <p>• Observation: 무엇을 봤는가</p>
-            <p>• Intent: 왜 기록했는지</p>
-            <p>• Signal: 다음 회차에 어떻게 반영할지</p>
+            <p>• Observation: What was seen</p>
+            <p>• Intent: Why it was recorded</p>
+            <p>• Signal: How it will be reflected in the next session</p>
           </div>
         </div>
 
         <InstaSlider slides={instaSlides} />
 
         <p className="mt-6 text-[14px] leading-7 text-black/70">
-          이미지들은 결과가 아니라, <strong>상태 변화를 판단하기 위한 기록 단위</strong>로 사용되었습니다.
+          Images were used not as results, but as <strong>recording units to judge state changes</strong>.
         </p>
 
         <p className="mt-3 text-[14px] leading-7 text-black/70">
-          관측(Observation)·의도(Intent)·신호(Signal)를 고정해, 아카이브가 운영 근거로 기능하도록 설계했습니다.
+          Fixed Observation·Intent·Signal so the archive functions as operational rationale.
         </p>
       </section>
 
@@ -1552,13 +1527,12 @@ export default function Page() {
         <SectionTitle
           eyebrow="Feedback Loop"
           title="Survey — turning signals into inputs"
-          desc="외부 링크로 이동하되, 포트폴리오 내부에서는 데이터가 즉시 펼쳐지도록 구성했습니다."
+          desc="Configured to redirect to external links, but data unfolds immediately within the portfolio."
         />
 
         <div className="rounded-[22px] border border-black/10 bg-white p-5">
           <p className="text-[14px] leading-7 text-black/70">
-            경험을 “좋았다”로 남기지 않기 위해, 각 회차 이후의 상태를 입력값으로 수집했습니다. 각 회차 이후,
-            대화의 밀도·연결감·정서적 잔량을 중심으로 한 지표를 리커트 척도와 키워드 응답으로 구조화해 수집했습니다.
+            To not leave experience as just "it was good," the state after each session was collected as input. After each session, indicators centered on conversation density, connection, and emotional residue were structured and collected as Likert scale and keyword responses.
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1569,20 +1543,20 @@ export default function Page() {
               onClick={() => setShowInlineCSV(true)}
               className="inline-flex items-center justify-center rounded-full border border-black/10 bg-black px-4 py-2 text-[12.5px] text-white"
             >
-              설문조사 보러가기
+              View survey
             </a>
             <span className="text-[12px] text-black/45">tally.so/r/wzZ42q</span>
           </div>
 
           {showInlineCSV ? (
             <div className="mt-6">
-              <p className="mb-2 text-[12px] text-black/45">CSV Preview (약 20행)</p>
+              <p className="mb-2 text-[12px] text-black/45">CSV Preview (approx. 20 rows)</p>
 
               {csv.loading ? (
-                <p className="text-[13.5px] text-black/60">CSV를 불러오는 중입니다…</p>
+                <p className="text-[13.5px] text-black/60">Loading CSV…</p>
               ) : csv.err ? (
                 <p className="text-[13.5px] text-black/60">
-                  CSV를 불러오지 못했습니다: <span className="text-black/75">{csv.err}</span>
+                  Failed to load CSV: <span className="text-black/75">{csv.err}</span>
                 </p>
               ) : (
                 <CSVTable headers={csv.headers} rows={csv.rows} maxRows={20} />
@@ -1590,14 +1564,14 @@ export default function Page() {
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[12px] text-black/45">
-                  더 자세한 보기(검색/피벗)는 아래 Evidence 섹션에서 확인할 수 있습니다.
+                  More detailed viewing (search/pivot) is available in the Evidence section below.
                 </p>
                 <button
                   type="button"
                   onClick={() => setShowInlineCSV(false)}
                   className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-[12px] text-black/70 hover:bg-black/[0.03] transition"
                 >
-                  접기
+                  Collapse
                 </button>
               </div>
             </div>
@@ -1612,17 +1586,17 @@ export default function Page() {
         <SectionTitle
           eyebrow="Signals"
           title="Retention intention as a distribution"
-          desc="재참여 의향을 ‘평균’이 아니라 ‘분포’로 읽어 운영 조정의 우선순위를 만들었습니다."
+          desc="Read re-engagement intention as 'distribution' rather than 'average' to create operational adjustment priorities."
         />
         {csv.loading || csv.err ? (
           <div className="rounded-[22px] border border-black/10 bg-white p-5">
             <p className="text-[13.5px] text-black/60">
-              {csv.loading ? "CSV를 불러오는 중입니다…" : `CSV 오류: ${csv.err}`}
+              {csv.loading ? "Loading CSV…" : `CSV error: ${csv.err}`}
             </p>
           </div>
         ) : (
           <LikertHistogram
-            title="재참여 의향 분포 (Likert 1–5)"
+            title="Re-engagement intention distribution (Likert 1–5)"
             headers={csv.headers}
             rows={csv.rows}
           />
@@ -1643,14 +1617,13 @@ export default function Page() {
         <SectionTitle
           eyebrow="Decision System"
           title="Role-based moderation rules"
-          desc="운영은 한 명의 리더가 통제하는 방식이 아니라, 상황에 따라 역할이 분화·교체되는 모더레이션 구조로 설계되었습니다."
+          desc="Operations were designed not as control by one leader, but as a moderation structure where roles differentiate and rotate according to situations."
         />
 
         <p className="text-[14px] leading-7 text-black/70">
-          역할은 특정 인물에게 고정되지 않았고, 회차와 상태에 따라 유동적으로 교체되었습니다. 이 구조를 운영하기 위해
-          최소 <strong>2명 이상의 운영자</strong>가 필요했습니다. (온보딩·페이싱·대화 조율을 동시에 수행하기 위해)
+          Roles were not fixed to specific individuals, but fluidly rotated according to sessions and states. To operate this structure, at least <strong>2 or more operators</strong> were needed (to simultaneously perform onboarding, pacing, and conversation coordination).
           <br />
-          운영자 고정이 아니라, 회차마다 역할을 교체할 수 있도록 설계했습니다.
+          Designed so roles could be rotated in each session, not fixed operators.
         </p>
 
         {/* Updated Grid for OpenAI Style - Slightly more vertical rhythm */}
@@ -1659,52 +1632,51 @@ export default function Page() {
             subtitle="Rule Card 01"
             title="Onboarding Moderator"
             bullets={[
-              { label: "역할", text: "첫 방문자의 긴장 완화, 그날 세션의 분위기 톤 제시" },
-              { label: "개입 기준", text: "초면 비율이 높을수록 개입을 강화" },
-              { label: "판단 신호", text: "자기소개 이후 말의 속도, 웃음/침묵의 비율" },
+              { label: "Role", text: "Relieve tension of first-time visitors, present atmosphere tone of that day's session" },
+              { label: "Intervention criteria", text: "Strengthen intervention as the proportion of first meetings increases" },
+              { label: "Judgment signal", text: "Speed of speech after self-introduction, ratio of laughter/silence" },
             ]}
-            purpose="“여기는 평가받는 자리가 아니다”라는 신호를 초기에 고정합니다."
+            purpose="Fix the signal early: 'This is not a place to be evaluated.'"
           />
 
           <RuleCard
             subtitle="Rule Card 02"
             title="Running Pacer"
             bullets={[
-              { label: "역할", text: "러닝 강도를 ‘운동 성취’가 아닌 ‘대화 가능 상태’에 맞춥니다." },
-              { label: "개입 기준", text: "호흡이 과도하게 가빠질 경우 즉시 감속합니다." },
-              { label: "판단 신호", text: "러닝 중 말의 단절 여부, 대화 유지 가능성" },
+              { label: "Role", text: "Adjust running intensity not to 'athletic achievement' but to 'state where conversation is possible.'" },
+              { label: "Intervention criteria", text: "Decelerate immediately if breathing becomes excessively rapid." },
+              { label: "Judgment signal", text: "Interruption of speech during running, possibility of maintaining conversation" },
             ]}
-            purpose="러닝을 성과가 아니라 전처리(pre-processing) 단계로 유지합니다."
+            purpose="Maintain running as a pre-processing stage, not performance."
           />
 
           <RuleCard
             subtitle="Rule Card 03"
             title="Running Conversation Moderator"
             bullets={[
-              { label: "역할", text: "러닝 중 자연스러운 대화 흐름을 유지하고, 쏠림을 완화합니다." },
-              { label: "개입 기준", text: "침묵이 길어지거나 특정 주제에서 긴장이 발생하면 개입합니다." },
-              { label: "판단 신호", text: "응답 간격, 대화 참여자 분포" },
+              { label: "Role", text: "Maintain natural conversation flow during running and ease bias." },
+              { label: "Intervention criteria", text: "Intervene when silence lengthens or tension occurs on specific topics." },
+              { label: "Judgment signal", text: "Response intervals, distribution of conversation participants" },
             ]}
-            purpose="움직임 속에서도 비교와 위계를 만들지 않는 상태를 유지합니다."
+            purpose="Maintain a state that does not create comparison and hierarchy even in movement."
           />
 
           <RuleCard
             subtitle="Rule Card 04"
             title="Coffee Session Moderator"
             bullets={[
-              { label: "역할", text: "대화의 깊이를 조절하고, 과열/과도한 노출을 완충합니다." },
-              { label: "개입 기준", text: "대화 잔류 시간이 급격히 줄어들면 구조를 조정합니다." },
-              { label: "판단 신호", text: "자리 이탈 타이밍, 질문의 방향성" },
+              { label: "Role", text: "Adjust conversation depth and buffer overheating/excessive exposure." },
+              { label: "Intervention criteria", text: "Adjust structure when conversation retention time decreases sharply." },
+              { label: "Judgment signal", text: "Timing of leaving seats, direction of questions" },
             ]}
-            purpose="대화를 ‘성과’가 아니라 ‘정리 가능한 경험’으로 마무리합니다."
+            purpose="Finish conversation not as 'performance' but as 'experience that can be organized.'"
           />
         </div>
 
         <div className="mt-10 rounded-[22px] border border-black/10 bg-white p-5">
           <p className="text-[12px] text-black/45">Decision logic</p>
           <p className="mt-2 text-[13.5px] leading-7 text-black/80">
-            의사결정은 정답을 찾기보다, 경험의 마찰력(friction)을 만들어내는 조건을 제거하는 방식으로 이루어졌습니다.
-            정성 신호(말의 속도, 침묵의 밀도, 체류 시간)를 운영 수정의 트리거(trigger)로 사용했습니다.
+            Decision-making was done not by finding the right answer, but by removing conditions that create friction in experience. Qualitative signals (speed of speech, silence density, dwell time) were used as triggers for operational modification.
           </p>
         </div>
       </section>
@@ -1716,29 +1688,29 @@ export default function Page() {
         <SectionTitle
           eyebrow="Output"
           title="What changed once the criteria shifted"
-          desc="결론을 ‘나열’이 아니라, 결과물이 보이도록 카드 형태로 고정했습니다."
+          desc="Fixed conclusion not as 'enumeration,' but as card format so results are visible."
         />
 
-        {/* ✅ Output 임팩트: 카드 3장 */}
+        {/* ✅ Output impact: 3 cards */}
         <OutputCards
           items={[
             {
               eyebrow: "Retention loop",
-              title: "예측 가능한 재참여",
+              title: "Predictable re-engagement",
               desc:
-                "외부 마케팅 없이도, 경험 설계만으로 재참여가 반복되는 루프가 만들어졌습니다. 운영의 핵심은 ‘성장’이 아니라 ‘재현 가능한 상태’였습니다.",
+                "Even without external marketing, a loop where re-engagement repeats was created solely through experience design. The core of operations was not 'growth' but 'reproducible state.'",
             },
             {
               eyebrow: "Operational stability",
-              title: "룰과 역할로 품질 방어",
+              title: "Defend quality with rules and roles",
               desc:
-                "운영자가 매번 에너지를 쏟지 않아도, 역할 분화와 개입 기준이 세션 품질을 방어하도록 구조화했습니다.",
+                "Structured so role differentiation and intervention criteria defend session quality without operators having to exert energy every time.",
             },
             {
               eyebrow: "Cultural replication",
-              title: "참여자가 문화를 재현",
+              title: "Participants reproduce culture",
               desc:
-                "대화 방식과 톤을 참여자가 학습·복제할 수 있도록 언어/기록 구조를 고정했습니다. ‘모임’이 아니라 ‘운영 가능한 문화’로 전환되었습니다.",
+                "Fixed language/recording structure so participants can learn and replicate conversation methods and tone. Transformed from 'gathering' to 'operable culture.'",
             },
           ]}
         />
@@ -1750,32 +1722,29 @@ export default function Page() {
       <section>
         <SectionTitle
           eyebrow="Final Definition"
-          title="Designing the unit of ‘state’"
-          desc="정의로 끝내지 않고, ‘할 수 있는 일’로 마무리했습니다."
+          title="Designing the unit of 'state'"
+          desc="Did not end with definition, but finished with 'what can be done.'"
         />
 
         <p className="text-[14px] leading-7 font-medium text-black/80">
-          브랜드는 정체성을 고정하는 것이 아니라, 서로 다른 상태들이 안전하게 만날 수 있게 만드는 기준입니다.
+          Brand is not about fixing identity, but creating criteria that allow different states to meet safely.
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          PMCC는 하나의 커뮤니티 사례라기보다, 사람이 머무르고 떠나는 판단이 어떻게 형성되는지를 구조적으로 다룬
-          프로젝트였습니다.
+          PMCC was not just one community case, but a project that structurally dealt with how judgments about people staying and leaving are formed.
         </p>
 
         <p className="mt-4 text-[14px] leading-7 text-black/70">
-          이 프로젝트 이후, 기획의 출발점은 기능이나 콘텐츠가 아니라{" "}
-          <strong>경험이 끝난 뒤 사용자에게 남아야 할 상태</strong>로 이동했습니다. 이후 모든 기획은 기능을 쌓기 전에,
-          경험 이후 어떤 상태가 남아야 하는지부터 정의합니다.
+          After this project, the starting point of planning shifted not to functions or content but to <strong>the state that should remain with users after the experience ends</strong>. After that, all planning starts by defining what state should remain after experience, before stacking functions.
         </p>
 
-        {/* ✅ Final 임팩트 박스 */}
+        {/* ✅ Final impact box */}
         <div className="mt-8 rounded-[22px] border border-black/10 bg-black px-5 py-5">
           <p className="text-[12px] text-white/65">What this enables</p>
           <div className="mt-3 grid gap-2 text-[13.5px] leading-7 text-white/90">
-            <p>• 정량 지표와 실제 행동 변화의 괴리를 구조적으로 진단하고, 기준을 재설계할 수 있습니다.</p>
-            <p>• 경험 설계를 “기능 나열”이 아니라 “상태 정의 → 신호 관측 → 개입 규칙”으로 운영할 수 있습니다.</p>
-            <p>• 브랜딩을 “표현”이 아니라 “운영 재현성” 관점에서 시스템화할 수 있습니다.</p>
+            <p>• Structurally diagnose the gap between quantitative indicators and actual behavioral change, and redesign criteria.</p>
+            <p>• Operate experience design not as "feature enumeration" but as "state definition → signal observation → intervention rules."</p>
+            <p>• Systematize branding from "expression" to "operational reproducibility" perspective.</p>
           </div>
         </div>
       </section>
@@ -1787,45 +1756,45 @@ export default function Page() {
         <SectionTitle
           eyebrow="Next"
           title="Where this expands"
-          desc="확장 가능성을 ‘추상’이 아니라 적용 분야로 구체화했습니다."
+          desc="Concretized expansion possibilities not as 'abstract' but as application fields."
         />
 
         <p className="text-[14px] leading-7 text-black/70">
-          PMCC 운영 경험을 통해 배운 것은 러닝 자체에 대한 경험이  아니라, 사람들이 경험 이후 어떤 상태로 남는지에 대한 판단 구조였습니다. 이 기준은
-          오프라인 커뮤니티를 넘어, 보이지 않는 경험을 정량화해야 하는 영역으로 확장될 수 있습니다.
+          What was learned through PMCC operation experience was not about running itself, but the judgment structure about what state people remain in after experience. This criterion can expand beyond offline communities to areas where invisible experiences must be quantified.
         </p>
 
         <div className="mt-6 grid gap-3 rounded-[22px] border border-black/10 bg-white p-5">
           <p className="text-[12px] text-black/45">Expansion targets</p>
           <p className="text-[13.5px] leading-7 text-black/75">
-            • 웰니스 앱: 감정선(긴장/완화) 기반 리텐션 설계, 상태 신호를 입력값으로 전환
+            • Wellness apps: Retention design based on emotional lines (tension/relaxation), converting state signals into input
             <br />
-            • 공간 UX: 체류/대화/이탈 신호를 관측해 공간 운영(동선·좌석·소리)으로 연결
+            • Spatial UX: Observing dwell/conversation/attrition signals and connecting to space operations (flow, seating, sound)
             <br />
-            • 조직 문화/HR: 심리적 안전감의 신호를 측정하고, 팀 운영 규칙(온보딩/피드백 구조)로 고정
+            • Organizational culture/HR: Measuring signals of psychological safety and fixing them into team operation rules (onboarding/feedback structure)
           </p>
         </div>
       </section>
-            {/* ================= Navigation ================= */}
+
+      {/* ================= Navigation ================= */}
       <section>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
             href="/projects/empty-house-cps"
             className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white px-5 text-[13px] font-medium text-black/70 hover:text-black transition"
           >
-            ← 프로젝트 1 보기
+            ← View Project 1
           </a>
           <a
             href="/projects/skin-diary-ai"
             className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white px-5 text-[13px] font-medium text-black/70 hover:text-black transition"
           >
-            프로젝트 2 보기 →
+            View Project 2 →
           </a>
           <a
             href="/"
             className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-black px-5 text-[13px] font-medium text-white hover:bg-black/90 transition"
           >
-            홈으로 돌아가기
+            Back to Home
           </a>
         </div>
       </section>
